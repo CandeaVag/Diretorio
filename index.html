@@ -569,30 +569,21 @@ if (jeep.x !== chegada.x || jeep.y !== chegada.y) {
 }else{
  
  // --- LÓGICA DO VÍDEO ---
- const video = document.getElementById("video-vitoria");
- // Mostra o vídeo
- video.style.display = "block";
- // Toca o vídeo
- video.play().catch(error => {
-  console.log("Erro ao tentar tocar o vídeo automaticamente (política do navegador):", error);
-  // Navegadores modernos às vezes bloqueiam autoplay com som. 
-  // Se falhar, o usuário pode precisar clicar para tocar.
- });
+const video = document.getElementById("video-vitoria");
+// Mostra o vídeo
+video.style.display = "block";
+// Toca o vídeo
+video.play().catch(error => {
+    console.log("Erro ao tentar tocar o vídeo automaticamente:", error);
+});
 
- video.onclick = function() {
+// Novo: Evento de clique no vídeo
+video.onclick = function() {
     video.pause();           // Pausa o vídeo
     video.style.display = "none"; // Esconde o vídeo
     video.currentTime = 0;   // Volta ao início
     reiniciarJogo();         // Chama a função para reiniciar
 };
-    
-    // Opcional: Mostrar o botão de reiniciar apenas quando o vídeo terminar
- video.onended = function() {
- reiniciarJogo();
- somSafari.play();
- //            video.style.display = "none"; // Esconde o vídeo ao terminar
- //            document.getElementById("btn-reiniciar").style.display = "inline-block"; // Mostra o botão
- };
 
 }
 }
