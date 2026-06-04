@@ -59,7 +59,7 @@ const ctx = canvas.getContext("2d");
 const contador = document.getElementById("contador");
 
 
-let musicaIniciada = false;
+let musicaIniciada = 1;
 let animando = false;
 
 let inicioAnim = null;
@@ -87,12 +87,14 @@ const OFFSET_Y = 120;
 let anguloJipe = Math.PI; // 0 = direita, PI/2 = baixo, PI = esquerda, -PI/2 = cima   
 
 function iniciarMusica(){
-if(musicaIniciada) return;
-musicaIniciada = true;
-document
- .getElementById("somSafari")
- .play()
- .catch(()=>{});
+if(musicaIniciada==2) return;
+if(musicaIniciada==1){
+ document
+  .getElementById("somSafari")
+  .play()
+  .catch(()=>{});
+}
+musicaIniciada = musicaIniciada+1;
 }
 
 function px(col){
@@ -568,6 +570,7 @@ if (jeep.x !== chegada.x || jeep.y !== chegada.y) {
  moverJipePara(chegada.x, chegada.y);
 }else{
  somSafari.pause();
+ musicaIniciada = 0;
  // --- LÓGICA DO VÍDEO ---
 const video = document.getElementById("video-vitoria");
 // Mostra o vídeo
