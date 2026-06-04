@@ -85,7 +85,7 @@ const OFFSET_X = 150;
 const OFFSET_Y = 120;
 
 let anguloJipe = Math.PI; // 0 = direita, PI/2 = baixo, PI = esquerda, -PI/2 = cima   
-
+let musicaIniciada = false;
 function iniciarMusica(){
 if(musicaIniciada) return;
 musicaIniciada = true;
@@ -557,7 +557,6 @@ const video = document.getElementById("video-vitoria");
 video.style.display = "none";
 video.pause();
 video.currentTime = 0;
-somSafari.play();
 // 5. O loop já está rodando, então o jogo volta a aceitar cliques imediatamente
 console.log("Jogo reiniciado!");
 }
@@ -568,6 +567,7 @@ if (jeep.x !== chegada.x || jeep.y !== chegada.y) {
  moverJipePara(chegada.x, chegada.y);
 }else{
  somSafari.pause();
+ musicaIniciada = false;
  // --- LÓGICA DO VÍDEO ---
 const video = document.getElementById("video-vitoria");
 // Mostra o vídeo
