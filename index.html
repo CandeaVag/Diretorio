@@ -87,8 +87,8 @@ const OFFSET_Y = 120;
 let anguloJipe = Math.PI; // 0 = direita, PI/2 = baixo, PI = esquerda, -PI/2 = cima   
 
 function iniciarMusica(){
-if(musicaIniciada==2) return;
-if(musicaIniciada==1){
+if(musicaIniciada === 2) return;
+if(musicaIniciada === 1){
  document
   .getElementById("somSafari")
   .play()
