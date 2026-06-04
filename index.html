@@ -557,7 +557,7 @@ const video = document.getElementById("video-vitoria");
 video.style.display = "none";
 video.pause();
 video.currentTime = 0;
-
+musicaIniciada = false;
 // 5. O loop já está rodando, então o jogo volta a aceitar cliques imediatamente
 console.log("Jogo reiniciado!");
 }
@@ -568,14 +568,13 @@ if (jeep.x !== chegada.x || jeep.y !== chegada.y) {
  moverJipePara(chegada.x, chegada.y);
 }else{
  somSafari.pause();
- musicaIniciada = false;
  // --- LÓGICA DO VÍDEO ---
-const video = document.getElementById("video-vitoria");
-// Mostra o vídeo
-video.style.display = "block";
-// Toca o vídeo
-video.play().catch(error => {
-    console.log("Erro ao tentar tocar o vídeo automaticamente:", error);
+ const video = document.getElementById("video-vitoria");
+ // Mostra o vídeo
+ video.style.display = "block";
+ // Toca o vídeo
+ video.play().catch(error => {
+  console.log("Erro ao tentar tocar o vídeo automaticamente:", error);
 });
 
 // Novo: Evento de clique no vídeo
