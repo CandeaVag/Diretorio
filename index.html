@@ -579,7 +579,14 @@ if (jeep.x !== chegada.x || jeep.y !== chegada.y) {
   // Se falhar, o usuário pode precisar clicar para tocar.
  });
 
- // Opcional: Mostrar o botão de reiniciar apenas quando o vídeo terminar
+ video.onclick = function() {
+    video.pause();           // Pausa o vídeo
+    video.style.display = "none"; // Esconde o vídeo
+    video.currentTime = 0;   // Volta ao início
+    reiniciarJogo();         // Chama a função para reiniciar
+};
+    
+    // Opcional: Mostrar o botão de reiniciar apenas quando o vídeo terminar
  video.onended = function() {
  reiniciarJogo();
  somSafari.play();
