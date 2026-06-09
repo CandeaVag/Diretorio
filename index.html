@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Safari dos Animais</title>
+
+<style>
+body{
+ margin:0;
+ background:#7ec850;
+ font-family:Arial,sans-serif;
+ text-align:center;
+}
+
+h1{
+ margin:10px;
+}
+
+#info{
+ font-size:20px;
+ font-weight:bold;
+ margin-bottom:10px;
+}
+
+canvas{
+ border:3px solid #333;
+ background:#7ec850;
+ max-width:95vw;
+ max-height:85vh;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🦁Safari com o Derick🦒</h1>
+
+<div id="info">
+	Animais visitados: <span id="contador">0</span> / 5
+</div>
+
+<canvas id="game" width="800" height="1200"></canvas>
+
+<audio id="somSafari" loop> 
+ <source src="Selva.mp3" type="audio/mpeg"> 
+</audio>
+
+<video id="video-vitoria" width="405" height="720" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); border:5px solid #fff; z-index:100;">
+	<!-- Substitua 'seu-video.mp4' pelo caminho do seu arquivo de vídeo -->
+	<source src="Convite Video.webm" type="video/webm">
+	Seu navegador não suporta vídeos em HTML5.
+</video>
+
+<script>
+const QtddVisitas = 5;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const contador = document.getElementById("contador");
+let musicaIniciada = false;
+let animando = false;
+let inicioAnim = null;
+let fimAnim = null;
+let duracaoAnim = 600;
+let movendoJipe = false;
+let destinoJipe = null;
+let velocidadeJipe = 0.75;
+
+/* ==========================
+   CONFIGURAÇÃO DO MAPA
+========================== */
+const CELL_X = 250;
+const CELL_Y = 250;
+const OFFSET_X = 150;
+const OFFSET_Y = 120;
+
+let anguloJipe = Math.PI/2; // 0 = esquerda, PI = direita, PI/2 = cima, -PI/2 = baixo
+
+function iniciarMusica(){
+	if(musicaIniciada) return;
+	musicaIniciada = true;
+	document
+ 	.getElementById("somSafari")
+ 	.play()
+ 	.catch(()=>{});
+}
+
+function px(col){
+	return OFFSET_X + col * CELL_X;
+}
+
+function py(row){
+ return OFFSET_Y + row * CELL_Y;
+}
+
+const animais = [
+	{emoji:"🐘",nome:"Elefante", x:0, y:0},
+	{emoji:"🦁",nome:"Leão", x:1, y:0},
+	{emoji:"🦍",nome:"Gorila", x:2, y:0},
+	{emoji:"🐗",nome:"Javali", x:1, y:1},
+	{emoji:"🐆",nome:"Leopardo", x:0, y:1},
+	{emoji:"🦏",nome:"Rinoceronte", x:2, y:1},
+	{emoji:"🐃",nome:"Búfalo", x:0, y:2},
+	{emoji:"🦓",nome:"Zebra", x:1, y:2},
+	{emoji:"🦒",nome:"Girafa", x:2, y:2},
+	{emoji:"🐪", nome:"Dromedário", x:0, y:3},
+	{emoji:"🦛", nome:"Hipopótamo", x:2, y:3},
+	{emoji:"🐒",nome:"Macaco", x:1, y:3}
+];
+
+function embaralhar(v){
+ let a = [...v];
+ for(let i=a.length-1;i>0;i--){
+  let j =
+  Math.floor(Math.random()*(i+1));
+  [a[i],a[j]] =
+  [a[j],a[i]];
+ }
+ return a;
+}
+
+let caminho = embaralhar(animais).slice(0, QtddVisitas);
+let progresso = 0;
+/* ==========================
+   JIPE E CHEGADA
+========================== */
+const jeep = {
+ x:0,
+ y:4
+};
+const chegada = {
+ x:0,
+ y:4
+};
+
+/* ==========================
+   FUNÇÃO MOVIMENTO
+========================== */
+function moverJipePara(x, y){
+	destinoJipe = {x, y};
+	movendoJipe = true;
+}
+/* ==========================
+   VEGETAÇÃO
+========================== */
+const vegetacao = [];
+for(let i=0;i<400;i++){
+ vegetacao.push({
+  emoji:[
+  	"🌴",
+  	"🌳"
+ 	]
+		[Math.floor(Math.random()*2)],
+	 tamanho: 25+Math.random()*45,
+	 x: Math.random()*800,
+	 y: Math.random()*1200
+ });
+}
+
+let brilho = 0;
+/* ==========================
+   TRILHAS
+========================== */
+function trilha(x1,y1,x2,y2){
+ ctx.strokeStyle="#8b5a2b";
+ ctx.lineWidth=70;
+ ctx.beginPath();
+ ctx.moveTo(px(x1),py(y1));
+ ctx.lineTo(px(x2),py(y2));
+ ctx.stroke();
+	ctx.strokeStyle="#c89b5d";
+ ctx.lineWidth=50;
+ ctx.beginPath();
+ ctx.moveTo(px(x1),py(y1));
+ ctx.lineTo(px(x2),py(y2));
+ ctx.stroke();
+}
+function desenharTrilhas(){
+ trilha(0,0,1,0);
+ trilha(1,0,2,0);
+	trilha(0,1,1,1);
+ trilha(1,1,2,1);
+ trilha(0,2,1,2);
+ trilha(1,2,2,2);
+ trilha(0,3,1,3);
+	trilha(0,0,0,1);
+	trilha(0,1,0,2);
+ trilha(0,2,0,3);
+ trilha(0,3,0,4);
+ trilha(1,0,1,1);
+	trilha(1,1,1,2);
+ trilha(2,0,2,1);
+ trilha(2,1,2,2);
+	trilha(2,2,2,3);
+ trilha(1,3,2,3);
+ trilha(1,2,1,3);
+}
+
+function desenharVegetacao(){
+ vegetacao.forEach(v=>{
+ ctx.font =
+  v.tamanho +
+  "px serif";
+  ctx.fillText(
+  	v.emoji,
+   v.x,
+   v.y
+  );
+ });
+}
+
+function desenharNos(){
+ const pontos = [
+  [0,0],[1,0],[2,0],
+  [0,1],[1,1],[2,1],
+  [0,2],[1,2],[2,2],
+  [0,3],[1,3],[2,3],
+  [0,4]
+ ];
+ ctx.fillStyle="#d9b382";
+	pontos.forEach(p=>{
+  ctx.beginPath();
+  ctx.arc(
+   px(p[0]),
+   py(p[1]),
+   35,
+   0,
+   Math.PI*2
+  );
+  ctx.fill();
+ });
+}
+
+function desenharAnimais(){
+ animais.forEach(a=>{
+  const x = px(a.x);
+  const y = py(a.y);
+  if(progresso < caminho.length && a === caminho[progresso]){
+			const raio = 45+Math.sin(brilho)*8;
+   ctx.save();
+   ctx.beginPath();
+   ctx.arc(
+				x,
+    y,
+    raio,
+    0,
+    Math.PI * 2
+   );
+   ctx.fillStyle = "rgba(255,0,0,0.45)";
+	  ctx.fill();
+   ctx.restore();
+  }
+  ctx.font = "64px serif";
+  ctx.fillText(
+   a.emoji,
+   x - 30,
+   y + 20
+  );
+ });
+}
+
+function desenharJipe(){
+ const x = px(jeep.x);
+ const y = py(jeep.y);
+ ctx.save();
+  ctx.translate(x, y);
+		ctx.font = "64px serif";
+		if(anguloJipe === Math.PI){ //Para direita
+   ctx.scale(-1, 1); // Inverte horizontalmente
+		}else if(anguloJipe === 0){ //Para esquerda
+   ctx.rotate(anguloJipe);
+		}else if(anguloJipe === Math.PI/2){ //Para cima
+   ctx.scale(-1, 1); // Inverte horizontalmente
+			ctx.rotate(anguloJipe);
+		}else if(anguloJipe === -Math.PI/2){ //Para baixo
+   ctx.scale(-1, 1); // Inverte horizontalmente
+			ctx.rotate(anguloJipe);
+		}
+		ctx.fillText("🚙", -40, 14); //-30, 20  
+		ctx.restore();
+}
+
+function desenharChegada(){
+ ctx.font="64px serif";
+ ctx.fillText(
+ 	"🏕️",
+ 	px(chegada.x)+20,
+ 	py(chegada.y)+20
+	);
+}
+
+canvas.addEventListener("click",clicar);
+function clicar(e){
+	iniciarMusica();
+ e.preventDefault();
+ let rect = canvas.getBoundingClientRect();
+ let cx;
+ let cy;
+ if(e.touches){
+  cx = e.touches[0].clientX - rect.left;
+  cy = e.touches[0].clientY - rect.top;
+ }else{
+  cx = e.clientX - rect.left;
+  cy = e.clientY - rect.top;
+ }
+ cx *= canvas.width / rect.width;
+ cy *= canvas.height / rect.height;
+ animais.forEach(a=>{
+  let ax = px(a.x);
+  let ay = py(a.y);
+  let dist = Math.hypot(
+              cx-ax,
+              cy-ay
+             );
+  if(dist < 50){
+   verificarAnimal(a);
+  }
+ });
+}
+
+function verificarAnimal(a){
+ let esperado = caminho[progresso];
+ if(a !== esperado){
+  errouAnimal(a);
+  return;
+ }
+ acertouAnimal(a);
+}
+
+function acertouAnimal(a){
+ moverJipePara(a.x, a.y);
+ if(progresso >= caminho.length){
+  vitoria();
+ }
+}
+
+function jipeChegouNoDestino(){
+ // Só incrementa se ainda estiver na fase de coletar animais (0 a 4)
+	if(progresso < QtddVisitas){
+  progresso++;
+  contador.innerHTML = progresso;
+ }
+ // Verifica vitória se já coletou os 5
+ if(progresso >= QtddVisitas){
+  vitoria();
+ }
+}
+
+function reiniciarJogo(){
+	// 1. Reseta variáveis de progresso
+	progresso = 0;
+	contador.innerHTML = "0";
+	// 2. Reseta posição do jipe para a chegada (que é o início agora)
+	jeep.x = 0;
+	jeep.y = 4;
+	//anguloJipe = -Math.PI / 2; // Apontando para cima
+	anguloJipe = Math.PI/2; // Apontando para cima
+	// 3. Sorteia novos animais
+	const novoCaminho = embaralhar(animais).slice(0, QtddVisitas);
+	// Atualiza a variável global 'caminho'
+	// Nota: Se 'caminho' for 'const', você precisará declará-la como 'let' lá em cima no código original.
+	// Se não puder mudar para 'let', a lógica de embaralhar deve ser feita de outra forma.
+	// Assumindo que você possa mudar 'const caminho' para 'let caminho':
+	caminho.length = 0; 
+	caminho.push(...novoCaminho);
+	// 4. Esconde o vídeo (garantia)
+	const video = document.getElementById("video-vitoria");
+	video.style.display = "none";
+	video.pause();
+	video.currentTime = 0;
+	musicaIniciada = false;
+	// 5. O loop já está rodando, então o jogo volta a aceitar cliques imediatamente
+	console.log("Jogo reiniciado!");
+}
+
+function vitoria(){
+	// Move o jipe para a bandeira se ainda não estiver lá
+	if(jeep.x !== chegada.x || jeep.y !== chegada.y){
+ 	moverJipePara(chegada.x, chegada.y);
+	}else{
+ 	somSafari.pause();
+ 	// --- LÓGICA DO VÍDEO ---
+ 	const video = document.getElementById("video-vitoria");
+ 	// Mostra o vídeo
+ 	video.style.display = "block";
+ 	// Toca o vídeo
+ 	video.play().catch(error => {
+ 	 console.log("Erro ao tentar tocar o vídeo automaticamente:", error);
+		});
+		// Evento de clique no vídeo
+		video.onclick = function(){
+		 video.pause();                // Pausa o vídeo
+		 video.style.display = "none"; // Esconde o vídeo
+		 video.currentTime = 0;        // Volta ao início
+		 reiniciarJogo();              // Chama a função para reiniciar
+		};
+	}
+}
+
+function desenhar(){
+ brilho += 0.28;
+ ctx.clearRect(
+  0,
+  0,
+  canvas.width,
+  canvas.height
+ );
+ desenharVegetacao();
+ desenharTrilhas();
+ desenharNos();
+ desenharAnimais();
+ desenharChegada();
+ desenharJipe();
+}
+
+let ultimoTempo = 0;
+const margem = 0.02;
+function loop(tempoAtual){
+	if(!ultimoTempo){
+		ultimoTempo = tempoAtual;
+	}
+	const deltaMs = tempoAtual - ultimoTempo;
+	ultimoTempo = tempoAtual;
+	const deltaSeg = deltaMs / 1000;
+	const passo = velocidadeJipe * deltaSeg;
+
+	if(movendoJipe && destinoJipe){
+ 	let dx = destinoJipe.x - jeep.x;
+ 	let dy = destinoJipe.y - jeep.y;
+		if(progresso !== QtddVisitas){
+			if (Math.abs(dy) > passo) {
+				jeep.y += Math.sign(dy) * passo;
+				anguloJipe = dy > 0 ? -Math.PI / 2 : Math.PI / 2;
+			}else if(Math.abs(dx) > passo){
+				jeep.y = destinoJipe.y;
+				dy = 0
+				jeep.x += Math.sign(dx) * velocidadeJipe * deltaSeg;
+				anguloJipe = dx > 0 ? Math.PI : 0;
+			}else{ // Chegou
+				jeep.x = destinoJipe.x;
+				dx = 0;
+				jeep.y = destinoJipe.y;
+				dy = 0
+				movendoJipe = false;
+				jipeChegouNoDestino();
+			}
+		}else{
+			if (Math.abs(dx) > passo) {
+				jeep.x += Math.sign(dx) * velocidadeJipe * deltaSeg;
+				anguloJipe = dx > 0 ? Math.PI : 0;
+			}else if(Math.abs(dy) > passo){
+				jeep.x = destinoJipe.x;
+				dx = 0
+				jeep.y += Math.sign(dy) * passo;
+				anguloJipe = dy > 0 ? -Math.PI / 2 : Math.PI / 2;
+			}else{ // Chegou
+				jeep.x = destinoJipe.x;
+				dx = 0
+				jeep.y = destinoJipe.y;
+				dy = 0;
+				movendoJipe = false;
+				jipeChegouNoDestino();
+			}
+		}
+	}
+	desenhar(); // O desenho continua para mostrar o jipe parado na bandeira
+	requestAnimationFrame(loop);
+}  
+
+loop();
+
+</script>
+
+</body>
+</html>
