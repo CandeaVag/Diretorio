@@ -30,6 +30,34 @@ canvas{
  max-width:95vw;
  max-height:85vh;
 }
+
+#container-video{
+ display:none;
+ position:absolute;
+ top:50%;
+ left:50%;
+ width:406px;
+ height:720px;
+ transform:translate(-50%, -50%);
+ z-index:100;
+}
+
+#video-vitoria{
+ display:block;
+ width:406px;
+ height:720px;
+ border:5px solid #fff;
+}
+
+#link-mapa{
+ position:absolute;
+ left:108px;
+ top:689px;
+ width:203px;
+ height:33px;
+ z-index:101;
+ background:rgba(255,0,0,0.4);
+}
 </style>
 </head>
 
@@ -47,11 +75,18 @@ canvas{
  <source src="Selva.mp3" type="audio/mpeg"> 
 </audio>
 
-<video id="video-vitoria" width="405" height="720" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); border:5px solid #fff; z-index:100;">
-	<!-- Substitua 'seu-video.mp4' pelo caminho do seu arquivo de vídeo -->
-	<source src="Convite 2609262004.mp4" type="video/webm">
-	Seu navegador não suporta vídeos em HTML5.
-</video>
+<div id="container-video">
+ <video id="video-vitoria" width="406" height="720">
+  <source src="Convite 2609262004.mp4" type="video/mp4">
+  Seu navegador não suporta vídeos em HTML5.
+ </video>
+ <!-- Área transparente do Google Maps -->
+  <a
+   id="link-mapa"
+   href="https://www.google.com/maps/dir/?api=1&destination=Rua%20da%20Torre%2C%2013%2C%20Franco%20da%20Rocha%2C%20SP"
+   target="_blank"
+  ></a>
+</div>
 
 <script>
 const QtddVisitas = 5;
@@ -365,11 +400,12 @@ function reiniciarJogo(){
 	caminho.length = 0; 
 	caminho.push(...novoCaminho);
 	// 4. Esconde o vídeo (garantia)
-	const video = document.getElementById("video-vitoria");
-	video.style.display = "none";
-	video.pause();
-	video.currentTime = 0;
-	musicaIniciada = false;
+ const containerVideo = document.getElementById("container-video");
+ const video = document.getElementById("video-vitoria");
+ containerVideo.style.display = "none";
+ video.pause();
+ video.currentTime = 0;
+ musicaIniciada = false;
 	// 5. O loop já está rodando, então o jogo volta a aceitar cliques imediatamente
 	console.log("Jogo reiniciado!");
 }
@@ -381,20 +417,27 @@ function vitoria(){
 	}else{
  	somSafari.pause();
  	// --- LÓGICA DO VÍDEO ---
- 	const video = document.getElementById("video-vitoria");
+  const containerVideo = document.getElementById("container-video");
+  const video = document.getElementById("video-vitoria");
  	// Mostra o vídeo
- 	video.style.display = "block";
+ 	containerVideo.style.display = "block";
  	// Toca o vídeo
  	video.play().catch(error => {
  	 console.log("Erro ao tentar tocar o vídeo automaticamente:", error);
 		});
 		// Evento de clique no vídeo
-		video.onclick = function(){
-		 video.pause();                // Pausa o vídeo
-		 video.style.display = "none"; // Esconde o vídeo
-		 video.currentTime = 0;        // Volta ao início
-		 reiniciarJogo();              // Chama a função para reiniciar
-		};
+  containerVideo.onclick = function(e){
+   // Se o clique foi no link do Maps,
+   // não reinicia o jogo.
+   if(e.target === document.getElementById("link-mapa")){
+    return;
+   }
+   // Qualquer outro ponto do vídeo reinicia o jogo.
+   video.pause();
+   containerVideo.style.display = "none";
+   video.currentTime = 0;
+   reiniciarJogo();
+  };
 	}
 }
 
